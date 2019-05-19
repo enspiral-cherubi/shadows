@@ -33,12 +33,18 @@ class Environment {
 
     this.gui = new dat.GUI()
     var options = this.gui.addFolder('options')
-    this.rotate = true
-    options.add(this, 'rotate').listen()
+    this.progress = true
+    this.wireframes = false
+    this.framesOff = false
+    this.reverse = false
+    options.add(this, 'progress').listen()
+    options.add(this, 'wireframes').listen()
+    options.add(this, 'reverse').listen()
     options.open()
 
     this.clock = new THREE.Clock()
     this.clock.start()
+    this.timeShift = 0
 
     var floorGeometry = new THREE.PlaneGeometry(400 , 400, 32 )
     floorGeometry.lookAt(new THREE.Vector3(0,1,0))
@@ -77,19 +83,43 @@ class Environment {
   }
 
   render () {
-    var t = this.clock.getElapsedTime()/40
+    var t = (this.clock.getElapsedTime() + this.timeShift)/40
     //
-    // if(this.rotate){
+    // if(this.progress){
     //   this.cube.rotation.x+=0.01
     //   this.cube.rotation.y+=0.01
     // }
 
-    if(this.rotate){
+    if(this.progress){
+      if(!this.clock.running){
+        this.timeShift += this.clock.getElapsedTime()
+        console.log(this.timeShift)
+        this.clock.start()
+      }
       this.lights.forEach((light) => {
-        light.position.y = 100*Math.sin(light.index*t)-11
-        light.position.z = this.sunsetDistance*(Math.cos(light.index*t)+1)
+        light.position.y = 100*Math.sin(light.index*t*(2*Number(this.reverse)-1))-11
+        light.position.z = 1.75*this.sunsetDistance*(Math.cos(light.index*t*(2*Number(this.reverse)-1))+1)
       })
     }
+    else {
+      if (this.clock.running){
+        this.clock.stop()
+      }
+    }
+
+    if(!(this.wireframes) && !(this.framesOff)){
+      this.meshes.forEach((mesh) => {
+        mesh.visible = false
+      })
+      this.framesOff = true
+    }
+    if(this.wireframes && this.framesOff){
+      this.meshes.forEach((mesh) => {
+        mesh.visible = true
+      })
+      this.framesOff = false
+    }
+
 
 
     // this.light.position.x+=0.01
@@ -135,9 +165,9 @@ class Environment {
       var mesh = new THREE.Mesh(geometry,material)
       mesh.castShadow = true
       mesh.receiveShadow = true
-      this.meshes.push(mesh)
       this.scene.add(mesh)
       var mesh2 = new THREE.Mesh(geometry,nightMaterial)
+      this.meshes.push(mesh2)
       this.scene.add(mesh2)
     })
 
