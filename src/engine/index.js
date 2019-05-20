@@ -3,7 +3,7 @@ const View = require('./view')
 const $ = require('jquery')
 const loop = require('raf-loop')
 
-class Engine {
+class engine {
 
   constructor () {
     this.environment = new Environment()
