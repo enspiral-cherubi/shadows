@@ -21,6 +21,7 @@ class Environment {
     this.renderer.setSize(window.innerWidth, window.innerHeight)
     this.renderer.setClearColor(0x000000, 1)
     this.renderer.shadowMap.enabled = true
+    // this.renderer.shadowMap.renderReverseSided = false
 
 
     // this.controls = new OrbitControls(this.camera)
@@ -36,7 +37,7 @@ class Environment {
     this.progress = true
     this.wireframes = false
     this.framesOff = false
-    this.reverse = false
+    this.reverse = true
     options.add(this, 'progress').listen()
     options.add(this, 'wireframes').listen()
     options.add(this, 'reverse').listen()
@@ -49,7 +50,7 @@ class Environment {
     var floorGeometry = new THREE.PlaneGeometry(400 , 400, 32 )
     floorGeometry.lookAt(new THREE.Vector3(0,1,0))
     floorGeometry.translate(0,-10.1,0)
-    var floorMaterial = new THREE.MeshToonMaterial( {color: 0xaaaaaa,side:THREE.DoubleSide} )
+    var floorMaterial = new THREE.MeshToonMaterial( {color: 0xaaaaaa,side:THREE.DoubleSide,shadowSide:THREE.DoubleSide} )
     var floorMesh = new THREE.Mesh( floorGeometry, floorMaterial )
     floorMesh.receiveShadow = true
     floorMesh.castShadow = true
@@ -65,20 +66,27 @@ class Environment {
     this.scene.add( floorMesh2 )
 
     this.sunsetDistance = 200
+    this.numLights = 3
+    var orbGeometry = new THREE.SphereGeometry(10,32,32)
     this.lights = []
-    for(var i = 0; i < 3; i++){
-      var light = new THREE.PointLight( randomHexColor(), 1, 2000 )
+    for(var i = 0; i < this.numLights; i++){
+      var color = randomHexColor()
+      var light = new THREE.PointLight( color, 1, 200000,2)
       light.position.set( 0, 0, this.sunsetDistance )
       this.scene.add( light )
       this.lights.push(light)
       light.index = i+1
       light.castShadow = true
+      var orbMaterial = new THREE.MeshBasicMaterial({shadowSide:null,color:color})
+      var orbMesh = new THREE.Mesh(orbGeometry,orbMaterial)
+      light.orb = orbMesh
+      this.scene.add(orbMesh)
     }
 
     this.camera.lookAt(this.lights[0].position)
 
-
-    // this._addCubeToScene()
+    this.popped = false
+    this.addCube()
     this.createCity()
   }
 
@@ -99,6 +107,12 @@ class Environment {
       this.lights.forEach((light) => {
         light.position.y = 100*Math.sin(light.index*t*(2*Number(this.reverse)-1))-11
         light.position.z = 1.75*this.sunsetDistance*(Math.cos(light.index*t*(2*Number(this.reverse)-1))+1)
+        light.orb.position.set(light.position.x,light.position.y,light.position.z)
+        if(light.position.y<-11){
+          light.intensity = 0
+        } else {
+          light.intensity = 1
+        }
       })
     }
     else {
@@ -108,13 +122,13 @@ class Environment {
     }
 
     if(!(this.wireframes) && !(this.framesOff)){
-      this.meshes.forEach((mesh) => {
+      this.wireframeMeshes.forEach((mesh) => {
         mesh.visible = false
       })
       this.framesOff = true
     }
     if(this.wireframes && this.framesOff){
-      this.meshes.forEach((mesh) => {
+      this.wireframeMeshes.forEach((mesh) => {
         mesh.visible = true
       })
       this.framesOff = false
@@ -124,14 +138,25 @@ class Environment {
 
     // this.light.position.x+=0.01
 
+    this.cube.rotation.x+=0.01
+    this.cube.rotation.y+=0.011
+
+    if(!this.popped && this.camera.position.distanceTo(this.cube.position) < 10){
+      console.log(randomHexColor())
+      this.lights.forEach((light) => {light.color.set(randomHexColor())})
+      this.cube.translateX(100*Math.random())
+      this.cube.translateY(100*Math.random())
+      this.camera.lookAt(this.cube.position)
+    }
+
     this.renderer.render(this.scene, this.camera)
 
   }
 
   // 'private'
 
-  _addCubeToScene() {
-    var geometry = new THREE.BoxGeometry(1,1,1)
+  addCube() {
+    var geometry = new THREE.BoxGeometry(2,2,2)
     var material = new THREE.MeshNormalMaterial()
     this.cube = new THREE.Mesh(geometry,material)
     this.scene.add(this.cube)
@@ -153,8 +178,9 @@ class Environment {
       positions.push([x,z])
     }
 
+
     //build meshes
-    this.meshes = []
+    this.wireframeMeshes = []
     var material = new THREE.MeshToonMaterial()
     var nightMaterial = new THREE.MeshBasicMaterial({wireframe:true, color:0x22457d})
     var h = 0
@@ -167,7 +193,7 @@ class Environment {
       mesh.receiveShadow = true
       this.scene.add(mesh)
       var mesh2 = new THREE.Mesh(geometry,nightMaterial)
-      this.meshes.push(mesh2)
+      this.wireframeMeshes.push(mesh2)
       this.scene.add(mesh2)
     })
 
