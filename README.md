@@ -1,6 +1,6 @@
-## slush2
+## shadows
 
-a simple template for threejs, now with dat.gui
+a city and some lights
 
 ### install
 
