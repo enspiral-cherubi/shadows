@@ -12,9 +12,9 @@ class Environment {
     this.scene = new THREE.Scene()
 
     this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 1000)
-    this.camera.position.z = 0
+    this.camera.position.z = -5
     this.camera.position.x = 0
-    this.camera.position.y = 20
+    this.camera.position.y = 25
 
 
     this.renderer = new THREE.WebGLRenderer({alpha: true, canvas: $('#three-canvas')[0]})
@@ -47,10 +47,10 @@ class Environment {
     this.clock.start()
     this.timeShift = 0
 
-    var floorGeometry = new THREE.PlaneGeometry(400 , 400, 32 )
+    var floorGeometry = new THREE.PlaneGeometry(2000 , 500, 32 )
     floorGeometry.lookAt(new THREE.Vector3(0,1,0))
-    floorGeometry.translate(0,-10.1,0)
-    var floorMaterial = new THREE.MeshToonMaterial( {color: 0xaaaaaa,side:THREE.DoubleSide,shadowSide:THREE.DoubleSide} )
+    floorGeometry.translate(0,-10.1,300)
+    var floorMaterial = new THREE.MeshToonMaterial( {color: 0x111111,side:THREE.DoubleSide,shadowSide:THREE.DoubleSide} )
     var floorMesh = new THREE.Mesh( floorGeometry, floorMaterial )
     floorMesh.receiveShadow = true
     floorMesh.castShadow = true
@@ -111,7 +111,7 @@ class Environment {
         if(light.position.y<-11){
           light.intensity = 0
         } else {
-          light.intensity = 1
+          light.intensity = Math.sin(light.index*t*(2*Number(this.reverse)-1))^2
         }
       })
     }
@@ -143,7 +143,11 @@ class Environment {
 
     if(!this.popped && this.camera.position.distanceTo(this.cube.position) < 10){
       console.log(randomHexColor())
-      this.lights.forEach((light) => {light.color.set(randomHexColor())})
+      this.lights.forEach((light) => {
+        var color = randomHexColor()
+        light.color.set(color)
+        light.orb.material.color.set(color)
+      })
       this.cube.translateX(100*Math.random())
       this.cube.translateY(100*Math.random())
       this.camera.lookAt(this.cube.position)
@@ -181,7 +185,7 @@ class Environment {
 
     //build meshes
     this.wireframeMeshes = []
-    var material = new THREE.MeshToonMaterial()
+    var material = new THREE.MeshToonMaterial({shadowSide:THREE.DoubleSide})
     var nightMaterial = new THREE.MeshBasicMaterial({wireframe:true, color:0x22457d})
     var h = 0
     positions.forEach((p) => {
