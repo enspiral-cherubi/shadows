@@ -1,6 +1,6 @@
 ## shadows
 
-a city and some lights
+a city and some lights, deployed here https://topological-ragnar.github.io/shadows
 
 ### install
 
